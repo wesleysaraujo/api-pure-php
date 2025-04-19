@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Gerenciador de Usuários - API Pure PHP</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: #3498db;
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-warning {
+            background: #f39c12;
+        }
+
+        .btn-warning:hover {
+            background: #d35400;
+        }
+
+        .card {
+            background: white;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table th,
+        table td {
+            padding: 12px 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        table th {
+            background-color: #f2f2f2;
+        }
+
+        .alert {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 2px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 5px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: black;
+        }
+
+        .form-title {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        #notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            color: white;
+            display: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="container">
+        <h1>Gerenciador de Usuários</h1>
+    </div>
+</header>
+
+<div class="container">
+    <div id="notification"></div>
+
+    <div class="card">
+        <button id="btn-add-user" class="btn">Adicionar Novo Usuário</button>
+    </div>
+
+    <div class="card">
+        <h2>Lista de Usuários</h2>
+        <div id="user-list">
+            <p>Carregando usuários...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para adicionar/editar usuário -->
+<div id="user-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 id="form-title" class="form-title">Adicionar Usuário</h2>
+        <form id="user-form">
+            <input type="hidden" id="user-id">
+            <div class="form-group">
+                <label for="name">Nome:</label>
+                <input type="text" id="name" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" required>
+            </div>
+            <button type="submit" class="btn">Salvar</button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de confirmação de exclusão -->
+<div id="delete-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 class="form-title">Confirmar Exclusão</h2>
+        <p>Tem certeza que deseja excluir este usuário?</p>
+        <div style="margin-top: 20px;">
+            <button id="confirm-delete" class="btn btn-danger">Sim, Excluir</button>
+            <button id="cancel-delete" class="btn">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Configuração da API
+    const API_URL = 'http://localhost:8080/api';
+    let currentUserId = null;
+
+    // Elementos do DOM
+    const userList = document.getElementById('user-list');
+    const userModal = document.getElementById('user-modal');
+    const deleteModal = document.getElementById('delete-modal');
+    const userForm = document.getElementById('user-form');
+    const formTitle = document.getElementById('form-title');
+    const notification = document.getElementById('notification');
+
+    // Abrir modal para adicionar usuário
+    document.getElementById('btn-add-user').addEventListener('click', () => {
+        formTitle.textContent = 'Adicionar Usuário';
+        document.getElementById('user-id').value = '';
+        document.getElementById('name').value = '';
+        document.getElementById('email').value = '';
+        userModal.style.display = 'block';
+    });
+
+    // Fechar modais quando clicar no X
+    document.querySelectorAll('.close').forEach(close => {
+        close.addEventListener('click', function() {
+            this.closest('.modal').style.display = 'none';
+        });
+    });
+
+    // Fechar modais quando clicar fora deles
+    window.addEventListener('click', (e) => {
+        if (e.target === userModal) {
+            userModal.style.display = 'none';
+        }
+        if (e.target === deleteModal) {
+            deleteModal.style.display = 'none';
+        }
+    });
+
+    // Cancelar exclusão
+    document.getElementById('cancel-delete').addEventListener('click', () => {
+        deleteModal.style.display = 'none';
+    });
+
+    // Carregar lista de usuários
+    async function loadUsers() {
+        try {
+            const response = await fetch(`${API_URL}/users`);
+
+            if (!response.ok) {
+                throw new Error('Erro ao carregar usuários');
+            }
+
+            const users = await response.json();
+
+            if (users.length === 0) {
+                userList.innerHTML = '<p>Nenhum usuário cadastrado.</p>';
+                return;
+            }
+
+            let tableHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Data de Criação</th>
+                                <th>Data de Atualização</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+            users.forEach(user => {
+                const createdDate = new Date(user.created_at).toLocaleDateString('pt-BR');
+                const updatedDate = user.updated_at
+                    ? (new Date(user.updated_at)).toLocaleDateString('pt-BR') + ' ' + (new Date(user.updated_at)).toLocaleTimeString('pt-BR')
+                    : '-';
+
+                tableHTML += `
+                        <tr>
+                            <td>${user.id}</td>
+                            <td>${user.name}</td>
+                            <td>${user.email}</td>
+                            <td>${createdDate}</td>
+                            <td>${updatedDate}</td>
+                            <td class="action-buttons">
+                                <button class="btn btn-warning btn-edit" data-id="${user.id}" data-name="${user.name}" data-email="${user.email}">Editar</button>
+                                <button class="btn btn-danger btn-delete" data-id="${user.id}">Excluir</button>
+                            </td>
+                        </tr>
+                    `;
+            });
+
+            tableHTML += `
+                        </tbody>
+                    </table>
+                `;
+
+            userList.innerHTML = tableHTML;
+
+            // Adicionar eventos aos botões de editar e excluir
+            document.querySelectorAll('.btn-edit').forEach(button => {
+                button.addEventListener('click', handleEdit);
+            });
+
+            document.querySelectorAll('.btn-delete').forEach(button => {
+                button.addEventListener('click', handleDelete);
+            });
+
+        } catch (error) {
+            showNotification(error.message, 'danger');
+            userList.innerHTML = `<p>Erro ao carregar usuários: ${error.message}</p>`;
+        }
+    }
+
+    // Editar usuário
+    function handleEdit() {
+        const userId = this.getAttribute('data-id');
+        const userName = this.getAttribute('data-name');
+        const userEmail = this.getAttribute('data-email');
+
+        document.getElementById('user-id').value = userId;
+        document.getElementById('name').value = userName;
+        document.getElementById('email').value = userEmail;
+
+        formTitle.textContent = 'Editar Usuário';
+        userModal.style.display = 'block';
+    }
+
+    // Excluir usuário
+    function handleDelete() {
+        currentUserId = this.getAttribute('data-id');
+        deleteModal.style.display = 'block';
+
+        // Confirmar exclusão
+        document.getElementById('confirm-delete').onclick = async () => {
+            try {
+                const response = await fetch(`${API_URL}/users/${currentUserId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erro ao excluir usuário');
+                }
+
+                showNotification('Usuário excluído com sucesso!', 'success');
+                deleteModal.style.display = 'none';
+                loadUsers();
+
+            } catch (error) {
+                showNotification(error.message, 'danger');
+            }
+        };
+    }
+
+    // Enviar formulário (criar ou atualizar usuário)
+    userForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const userId = document.getElementById('user-id').value;
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+
+        const userData = { name, email };
+
+        try {
+            let url = `${API_URL}/users`;
+            let method = 'POST';
+
+            // Se tiver ID, é uma atualização
+            if (userId) {
+                url = `${API_URL}/users/${userId}`;
+                method = 'PUT';
+            }
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData)
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao salvar usuário');
+            }
+
+            userModal.style.display = 'none';
+            showNotification('Usuário salvo com sucesso!', 'success');
+            loadUsers();
+
+        } catch (error) {
+            showNotification(error.message, 'danger');
+        }
+    });
+
+    // Exibir notificação
+    function showNotification(message, type) {
+        notification.textContent = message;
+        notification.style.backgroundColor = type === 'success' ? '#28a745' : '#dc3545';
+        notification.style.display = 'block';
+
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 3000);
+    }
+
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', loadUsers);
+</script>
+</body>
+</html>

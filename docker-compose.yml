@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # Serviço da API PHP
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: php_api
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+    networks:
+      - app-network
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+
+  # Serviço do MySQL
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database-example.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=api_database
+      - MYSQL_USER=apiuser
+      - MYSQL_PASSWORD=apipassword
+    command: --default-authentication-plugin=mysql_native_password
+
+  # Opcional: PHPMyAdmin para gerenciar o banco de dados
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    ports:
+      - "8081:80"
+    depends_on:
+      - db
+    networks:
+      - app-network
+    environment:
+      - PMA_HOST=db
+      - PMA_PORT=3306
+      - MYSQL_ROOT_PASSWORD=rootpassword
+
+# Volumes para persistência de dados
+volumes:
+  mysql_data:
+
+# Rede para comunicação entre containers
+networks:
+  app-network:
+    driver: bridge

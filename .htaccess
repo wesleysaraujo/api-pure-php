@@ -1,0 +1,11 @@
+# .htaccess - Configuração para URL amigáveis na API
+
+RewriteEngine On
+RewriteBase /
+
+# Se o arquivo ou diretório não existir fisicamente
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Redirecionar todas as requisições para index.php
+RewriteRule ^(.*)$ index.php [QSA,L]
